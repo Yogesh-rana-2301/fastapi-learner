@@ -1,1 +1,3 @@
 https://vine-fuchsia-594.notion.site/Async-24edd529f1a38055a712c8a1ec1245db?pvs=74
+https://fastapi.tiangolo.com/tutorial/?h=tutorial
+https://docs.pydantic.dev/latest/
