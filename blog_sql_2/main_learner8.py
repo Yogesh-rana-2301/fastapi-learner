@@ -52,3 +52,21 @@ async def get_blog(id,response:Response,db: Session=Depends(get_db)):
         response.status_code=status.HTTP_404_NOT_FOUND
         return {'detail':f"{id} not found"}
     return blog
+
+@app.put("/blog/{id}",status_code=status.HTTP_202_ACCEPTED)
+async def update(id, request:schema.Blog, db: Session=Depends(get_db)):
+    blog=db.query(models.User).filter(models.User.id==id)
+    if not blog.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'cant find')
+    else:
+        blog.update(request.model_dump())
+        db.commit()
+        return 'updated'
+
+#deleting a blog 
+@app.delete('/blog/{id}',status_code=status.HTTP_404_NOT_FOUND)
+async def destroy (id,db: Session=Depends(get_db)):
+    db.query(models.User).filter(models.User.id==id).delete(
+    synchronize_session="evaluate")
+    db.commit()
+    return 'done'
