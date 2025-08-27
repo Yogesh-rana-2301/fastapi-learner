@@ -7,6 +7,7 @@ from . import schema
 from . import models 
 from .database import engine, SessionLocal
 from sqlalchemy.orm import Session
+from typing import List
 
 
 app=FastAPI()
@@ -34,16 +35,17 @@ async def create_blog(blog:schema.Blog, db: Session=Depends(get_db)):
     db.add(new_blog)
     db.commit()
     db.refresh(new_blog)
+    
     return new_blog
 
-@app.get("/blog")
+@app.get("/blog",response_model=List[schema.ShowBlog])
 async def get_blogs(db: Session=Depends(get_db)):  
     blogs=db.query(models.User).all()
     return blogs
 
 
 
-@app.get("/blog/{id}")
+@app.get("/blog/{id}",response_model=schema.ShowBlog) #what response would be 
 async def get_blog(id,response:Response,db: Session=Depends(get_db)):
     blog=db.query(models.User).filter(models.User.id==id).first() 
     if not blog: 
@@ -52,6 +54,8 @@ async def get_blog(id,response:Response,db: Session=Depends(get_db)):
         response.status_code=status.HTTP_404_NOT_FOUND
         return {'detail':f"{id} not found"}
     return blog
+
+
 
 @app.put("/blog/{id}",status_code=status.HTTP_202_ACCEPTED)
 async def update(id, request:schema.Blog, db: Session=Depends(get_db)):
@@ -62,6 +66,9 @@ async def update(id, request:schema.Blog, db: Session=Depends(get_db)):
         blog.update(request.model_dump())
         db.commit()
         return 'updated'
+
+
+
 
 #deleting a blog 
 @app.delete('/blog/{id}',status_code=status.HTTP_404_NOT_FOUND)
