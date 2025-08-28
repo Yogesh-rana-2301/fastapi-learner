@@ -9,7 +9,11 @@ from . import schema
 from . import models 
 from .database import engine, SessionLocal
 from sqlalchemy.orm import Session
+
+from passlib.context import CryptContext
+
 from typing import List
+from . import hashing
 
 
 app=FastAPI()
@@ -75,10 +79,11 @@ async def destroy (id,db: Session=Depends(get_db)):
 
 
 
+
 @app.post('/user')
 async def create_user(request:schema.User, db: Session=Depends(get_db)):
-    
-    new_user=models.User(name=request.name, email=request.email,password=request.password)
+    hashed_pass=hashing.Hash.bcrypt(request.password)
+    new_user=models.User(name=request.name, email=request.email,password=hashed_pass)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
