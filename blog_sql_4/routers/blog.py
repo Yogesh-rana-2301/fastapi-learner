@@ -2,55 +2,37 @@ from fastapi import APIRouter, Depends ,status, HTTPException,Response
 from .. import schema, models, database
 from sqlalchemy.orm import Session
 from typing import List
+from ..repo import blog,user
 
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/blog",
+    tags=['BLOG']
+)
 
 
-@router.post("/blog",status_code=201,tags=['BLOG']) # for the metadata       
+@router.post("/",status_code=201) # for the metadata       
 async def create_blog(blog:schema.Blog, db: Session=Depends(database.get_db)): 
+    return blog.create(blog,db)
 
-    new_blog=models.Blog(title=blog.title, body=blog.body, user_id=blog.user_id)
-    db.add(new_blog)
-    db.commit()
-    db.refresh(new_blog)
-    
-    return new_blog
-
-@router.get("/blog",response_model=List[schema.ShowBlog],tags=['BLOG'])
+@router.get("/",response_model=List[schema.ShowBlog])
 async def get_blogs(db: Session=Depends(database.get_db)):  
-    blogs=db.query(models.Blog).all()
-    return blogs
+    return blog.get_all(db)
 
 
 
-@router.get("/blog/{id}",response_model=schema.ShowBlog,tags=['BLOG'])  
-async def get_blog(id,response:Response,db: Session=Depends(database.get_db)):
-    blog=db.query(models.Blog).filter(models.Blog.id==id).first() 
-    if not blog: 
-        response.status_code=status.HTTP_404_NOT_FOUND
-        return {'detail':f"{id} not found"}
-    return blog
+@router.get("/{id}",response_model=schema.ShowBlog)  
+async def get_blog(id,db: Session=Depends(database.get_db)):
+    return blog.get_one(id,db)
 
 
 
-@router.put("/blog/{id}",status_code=status.HTTP_202_ACCEPTED,tags=['BLOG'])
+@router.put("/{id}",status_code=status.HTTP_202_ACCEPTED)
 async def update(id, request:schema.Blog, db: Session=Depends(database.get_db)):
-    blog=db.query(models.Blog).filter(models.Blog.id==id)
-    if not blog.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'cant find')
-    else:
-        blog.update(request.model_dump())
-        db.commit()
-        return 'updated'
+    return blog.put_one(id,request,db)
 
 
-
-
-@router.delete('/blog/{id}',status_code=status.HTTP_404_NOT_FOUND,tags=['BLOG'])
+@router.delete('/{id}',status_code=status.HTTP_404_NOT_FOUND)
 async def destroy (id,db: Session=Depends(database.get_db)):
-    db.query(models.Blog).filter(models.Blog.id==id).delete(
-    synchronize_session="evaluate")
-    db.commit()
-    return 'done'
+    return blog.destroy_one(id,db)
 
