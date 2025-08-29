@@ -28,7 +28,7 @@ def get_db():
         db.close()
 
 
-@app.post ("/blog",status_code=201)       
+@app.post ("/blog",status_code=201,tags=['BLOG']) # for the metadata       
 
 
 async def create_blog(blog:schema.Blog, db: Session=Depends(get_db)): 
@@ -40,14 +40,14 @@ async def create_blog(blog:schema.Blog, db: Session=Depends(get_db)):
     
     return new_blog
 
-@app.get("/blog",response_model=List[schema.ShowBlog])
+@app.get("/blog",response_model=List[schema.ShowBlog],tags=['BLOG'])
 async def get_blogs(db: Session=Depends(get_db)):  
     blogs=db.query(models.Blog).all()
     return blogs
 
 
 
-@app.get("/blog/{id}",response_model=schema.ShowBlog)  
+@app.get("/blog/{id}",response_model=schema.ShowBlog,tags=['BLOG'])  
 async def get_blog(id,response:Response,db: Session=Depends(get_db)):
     blog=db.query(models.Blog).filter(models.Blog.id==id).first() 
     if not blog: 
@@ -57,7 +57,7 @@ async def get_blog(id,response:Response,db: Session=Depends(get_db)):
 
 
 
-@app.put("/blog/{id}",status_code=status.HTTP_202_ACCEPTED)
+@app.put("/blog/{id}",status_code=status.HTTP_202_ACCEPTED,tags=['BLOG'])
 async def update(id, request:schema.Blog, db: Session=Depends(get_db)):
     blog=db.query(models.Blog).filter(models.Blog.id==id)
     if not blog.first():
@@ -70,7 +70,7 @@ async def update(id, request:schema.Blog, db: Session=Depends(get_db)):
 
 
 
-@app.delete('/blog/{id}',status_code=status.HTTP_404_NOT_FOUND)
+@app.delete('/blog/{id}',status_code=status.HTTP_404_NOT_FOUND,tags=['BLOG'])
 async def destroy (id,db: Session=Depends(get_db)):
     db.query(models.Blog).filter(models.Blog.id==id).delete(
     synchronize_session="evaluate")
@@ -80,7 +80,7 @@ async def destroy (id,db: Session=Depends(get_db)):
 
 
 
-@app.post('/user')
+@app.post('/user',response_model=schema.ShowUser,tags=['USER'])
 async def create_user(request:schema.User, db: Session=Depends(get_db)):
     hashed_pass=hashing.Hash.bcrypt(request.password)
     new_user=models.User(name=request.name, email=request.email,password=hashed_pass)
@@ -88,4 +88,13 @@ async def create_user(request:schema.User, db: Session=Depends(get_db)):
     db.commit()
     db.refresh(new_user)
     return new_user
+
+
+@app.get('/user/{id}',response_model=schema.ShowUser,tags=['USER'])
+async def get_user(id:int,response:Response,db: Session=Depends(get_db) ):
+    user=db.query(models.User).filter(models.User.id==id)
+    if not user.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'cant find')
+    return user.first()
+
     
