@@ -29,11 +29,9 @@ def get_db():
 
 
 @app.post ("/blog",status_code=201,tags=['BLOG']) # for the metadata       
-
-
 async def create_blog(blog:schema.Blog, db: Session=Depends(get_db)): 
 
-    new_blog=models.Blog(title=blog.title, body=blog.body)
+    new_blog=models.Blog(title=blog.title, body=blog.body, user_id=blog.user_id)
     db.add(new_blog)
     db.commit()
     db.refresh(new_blog)
